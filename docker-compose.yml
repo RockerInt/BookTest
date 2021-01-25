@@ -1,0 +1,53 @@
+version: '3.4'
+
+services:
+  webapp:
+    image: ${DOCKER_REGISTRY-}webapp
+    build:
+      context: .
+      dockerfile: Clients/WebApp/Dockerfile
+    depends_on: 
+      - sqlserver
+      - books
+    networks:
+      - booksnet
+    links:
+      - books
+
+  books:
+    image: ${DOCKER_REGISTRY-}books
+    build:
+      context: .
+      dockerfile: API/Books/Dockerfile
+    depends_on: 
+      - sqlserver
+    networks:
+      - booksnet
+    links:
+      - sqlserver
+
+  gateway:
+    image: ${DOCKER_REGISTRY-}gateway
+    build:
+      context: .
+      dockerfile: API/Gateway/Dockerfile
+    depends_on: 
+      - sqlserver
+      - books
+    networks:
+      - booksnet
+    links:
+      - books
+
+  sqlserver:
+    image: ${DOCKER_REGISTRY-}sqlserver
+    build:
+      context: .
+      dockerfile: BD/Dockerfile
+    networks:
+      - booksnet
+
+networks:
+  booksnet:
+    driver: "bridge"
+
