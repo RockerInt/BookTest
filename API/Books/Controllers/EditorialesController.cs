@@ -71,7 +71,7 @@ namespace Books.Controllers
                 _context.Add(_editorial);
                 await _context.SaveChangesAsync();
 
-                return CreatedAtAction(nameof(GetByIdAsync), new { id = _editorial.Id }, null);
+                return StatusCode((int)HttpStatusCode.Created, _editorial);
             }
             else
             {
@@ -97,10 +97,13 @@ namespace Books.Controllers
                         return NotFound();
                     }
 
+                    _editorial.Nombre = editorial.Nombre;
+                    _editorial.Sede = editorial.Sede;
+
                     _context.Update(_editorial);
                     await _context.SaveChangesAsync();
 
-                    return CreatedAtAction(nameof(GetByIdAsync), new { id = _editorial.Id }, null);
+                    return Ok(_editorial);
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -133,6 +136,12 @@ namespace Books.Controllers
             }
 
             var editorial = await _context.Editoriales.FindAsync(id);
+
+            if (editorial is null)
+            {
+                return NotFound();
+            }
+
             _context.Editoriales.Remove(editorial);
             await _context.SaveChangesAsync();
 

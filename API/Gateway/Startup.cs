@@ -1,3 +1,6 @@
+using Gateway.Clients;
+using Gateway.Config;
+using Gateway.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -26,8 +29,26 @@ namespace Gateway
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            // Scopeds
+            services.AddCors(options => {
+                options.AddDefaultPolicy(builder =>
+                {
+                    builder.AllowAnyOrigin();
+                });
+            });
+            services.AddOptions();
+            services.Configure<UrlsConfig>(Configuration.GetSection("urls"));
+
+            // ----------------------- Scopeds ----------------------- //
+
+            // Services
             services.AddScoped<BooksService>();
+
+            // Clients
+            services.AddScoped<AutoresClient>();
+            services.AddScoped<EditorialesClient>();
+            services.AddScoped<LibrosClient>();
+
+            // ---------------------- /Scopeds ----------------------- //
 
             services.AddControllers();
             services.AddSwaggerGen(c =>
@@ -37,8 +58,10 @@ namespace Gateway
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
+            loggerFactory.CreateLogger<Startup>().LogInformation("Startup Gateway's service");
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -46,9 +69,11 @@ namespace Gateway
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Gateway v1"));
             }
 
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
 
             app.UseRouting();
+
+            app.UseCors();
 
             app.UseAuthorization();
 

@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Books.Models;
 using Books.Data;
 using System.Net;
+using System.Text.Json.Serialization;
 
 namespace Books.Controllers
 {
@@ -69,7 +70,8 @@ namespace Books.Controllers
 
             var libros = await Task.FromResult(_context.Libros
                 .Include(l => l.Editoriales)
-                .Where(x => x.AutoresHasLibros.Any(y => y.Libros.Editoriales.Id == id)).ToList());
+                .Where(x => x.Editoriales.Id == id).ToList());
+
             if (libros == null)
             {
                 return NotFound();
@@ -97,7 +99,7 @@ namespace Books.Controllers
                 _context.Add(_libro);
                 await _context.SaveChangesAsync();
 
-                return CreatedAtAction(nameof(GetByIdAsync), new { id = _libro.Isbn }, null);
+                return StatusCode((int)HttpStatusCode.Created, _libro);
             }
             else
             {
@@ -123,10 +125,16 @@ namespace Books.Controllers
                         return NotFound();
                     }
 
+                    _libro.Titulo = libro.Titulo;
+                    _libro.Sinopsis = libro.Sinopsis;
+                    _libro.NPaginas = libro.NPaginas;
+                    _libro.EditorialesId = libro.EditorialesId;
+                    _libro.Editoriales = await _context.Editoriales.SingleOrDefaultAsync(x => x.Id == libro.EditorialesId);
+
                     _context.Update(_libro);
                     await _context.SaveChangesAsync();
-                    
-                    return CreatedAtAction(nameof(GetByIdAsync), new { id = _libro.Isbn }, null);
+
+                    return Ok(_libro);
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -159,6 +167,12 @@ namespace Books.Controllers
             }
 
             var libro = await _context.Libros.FindAsync(id);
+
+            if (libro is null)
+            {
+                return NotFound();
+            }
+
             _context.Libros.Remove(libro);
             await _context.SaveChangesAsync();
 

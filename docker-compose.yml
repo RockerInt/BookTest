@@ -1,0 +1,53 @@
+version: '3.4'
+
+services:
+  webapp:
+    image: ${DOCKER_REGISTRY-}webapp
+    build:
+      context: .
+      dockerfile: Clients/WebApp/Dockerfile
+    depends_on: 
+      - db
+      - books
+    networks:
+      - booksnet
+    links:
+      - books
+
+  books:
+    image: ${DOCKER_REGISTRY-}books
+    build:
+      context: .
+      dockerfile: API/Books/Dockerfile
+    depends_on: 
+      - db
+    networks:
+      - booksnet
+    links:
+      - db
+
+  gateway:
+    image: ${DOCKER_REGISTRY-}gateway
+    build:
+      context: .
+      dockerfile: API/Gateway/Dockerfile
+    depends_on: 
+      - db
+      - books
+    networks:
+      - booksnet
+    links:
+      - books
+
+  db:
+    image: ${DOCKER_REGISTRY-}db
+    build:
+      context: .
+      dockerfile: BD/Dockerfile
+    networks:
+      - booksnet
+
+networks:
+  booksnet:
+    driver: "bridge"
+

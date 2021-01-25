@@ -8,8 +8,6 @@ EXPOSE 443
 FROM mcr.microsoft.com/dotnet/sdk:5.0-buster-slim AS build
 WORKDIR /src
 COPY ["API/Gateway/Gateway.csproj", "API/Gateway/"]
-COPY ["Libraries/Utilities/Utilities.csproj", "Libraries/Utilities/"]
-COPY ["Libraries/Models/Models.csproj", "Libraries/Models/"]
 RUN dotnet restore "API/Gateway/Gateway.csproj"
 COPY . .
 WORKDIR "/src/API/Gateway"

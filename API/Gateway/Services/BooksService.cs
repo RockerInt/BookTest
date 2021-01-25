@@ -1,4 +1,6 @@
 ﻿using Books.Models;
+using Gateway.Clients;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,35 +10,57 @@ namespace Gateway.Services
 {
     public class BooksService
     {
-        private BooksContext Db { get; set; }
+        private readonly ILogger<BooksService> _logger;
+        private readonly AutoresClient _autores;
+        private readonly EditorialesClient _editoriales;
+        private readonly LibrosClient _libros;
 
-        public BooksService(BooksContext db)
+        public BooksService(ILogger<BooksService> logger, AutoresClient autores, EditorialesClient editoriales, LibrosClient libros)
         {
-            Db = db;
+            _logger = logger;
+            _autores = autores;
+            _editoriales = editoriales;
+            _libros = libros;
         }
 
-        public async Task<List<Autores>> GetAutores()
+        public async Task<IEnumerable<Autores>> GetAutores()
         {
-            return await Task.FromResult(Db.Autores.ToList());
+            _logger.LogDebug("Autores client created, request = Get");
+            var response = await _autores.Get();
+            _logger.LogDebug("Autores response {@response}", response);
+
+            return response;
         }
 
-        public async Task<List<Autores>> GetAutoresByEditorial(int editorialId)
+        public async Task<IEnumerable<Autores>> GetAutoresByEditorial(int id)
         {
-            return await Task.FromResult(Db.Autores.Where(x => x.AutoresHasLibros.Any(y => y.Libros.Editoriales.Id == editorialId)).ToList());
+            _logger.LogDebug("Autores client created, request = GetAutoresByEditorial{@id}", id);
+            var response = await _autores.GetByEditorial(id);
+            _logger.LogDebug("Autores response {@response}", response);
+
+            return response;
         }
 
-        public async Task<bool> SaveEditorial(Editoriales editorial)
+        public async Task<Editoriales> SaveEditorial(Editoriales editorial)
         {
-            if (Db.Editoriales.Any(x => x.Id == editorial.Id))
+            _logger.LogDebug("Editoriales client created, request = GetById{@id}", editorial.Id);
+            var _editorial = await _editoriales.GetById(editorial.Id);
+            _logger.LogDebug("Editoriales response {@response}", _editorial);
+
+            if (_editorial is null)
             {
-                Db.Editoriales.Update(editorial);
+                _logger.LogDebug("Editoriales client created, request = Create{@editorial}", editorial);
+                _editorial = await _editoriales.Create(editorial);
+                _logger.LogDebug("Editoriales response {@response}", _editorial);
             }
             else
             {
-                Db.Editoriales.Add(editorial);
+                _logger.LogDebug("Editoriales client created, request = Update{@editorial}", editorial);
+                _editorial = await _editoriales.Update(editorial);
+                _logger.LogDebug("Editoriales response {@response}", _editorial);
             }
 
-            return (await Db.SaveChangesAsync()) != 0;
+            return _editorial;
         }
 
     }

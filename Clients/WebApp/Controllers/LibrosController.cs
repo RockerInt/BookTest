@@ -6,23 +6,25 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Books.Models;
+using WebApp.Clients;
 
 namespace WebApp.Controllers
 {
     public class LibrosController : Controller
     {
-        private readonly BooksContext _context;
+        private readonly LibrosClient _client;
+        private readonly EditorialesClient _editorialesClient;
 
-        public LibrosController(BooksContext context)
+        public LibrosController(LibrosClient client, EditorialesClient editorialesClient)
         {
-            _context = context;
+            _client = client;
+            _editorialesClient = editorialesClient;
         }
 
         // GET: Libros
         public async Task<IActionResult> Index()
         {
-            var booksContext = _context.Libros.Include(l => l.Editoriales);
-            return View(await booksContext.ToListAsync());
+            return View(await _client.Get());
         }
 
         // GET: Libros/Details/5
@@ -33,21 +35,20 @@ namespace WebApp.Controllers
                 return NotFound();
             }
 
-            var libros = await _context.Libros
-                .Include(l => l.Editoriales)
-                .FirstOrDefaultAsync(m => m.Isbn == id);
-            if (libros == null)
+            var libro = await _client.GetById(id.Value);
+
+            if (libro == null)
             {
                 return NotFound();
             }
 
-            return View(libros);
+            return View(libro);
         }
 
         // GET: Libros/Create
         public IActionResult Create()
         {
-            ViewData["EditorialesId"] = new SelectList(_context.Editoriales, "Id", "Nombre");
+            ViewData["EditorialesId"] = new SelectList(_editorialesClient.Get().Result, "Id", "Nombre");
             return View();
         }
 
@@ -56,16 +57,16 @@ namespace WebApp.Controllers
         // more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Isbn,EditorialesId,Titulo,Sinopsis,NPaginas")] Libros libros)
+        public async Task<IActionResult> Create([Bind("Isbn,EditorialesId,Titulo,Sinopsis,NPaginas")] Libros libro)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(libros);
-                await _context.SaveChangesAsync();
+                await _client.Create(libro);
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["EditorialesId"] = new SelectList(_context.Editoriales, "Id", "Nombre", libros.EditorialesId);
-            return View(libros);
+
+            ViewData["EditorialesId"] = new SelectList(await _editorialesClient.Get(), "Id", "Nombre", libro.EditorialesId);
+            return View(libro);
         }
 
         // GET: Libros/Edit/5
@@ -76,13 +77,15 @@ namespace WebApp.Controllers
                 return NotFound();
             }
 
-            var libros = await _context.Libros.FindAsync(id);
-            if (libros == null)
+            var libro = await _client.GetById(id.Value);
+
+            if (libro == null)
             {
                 return NotFound();
             }
-            ViewData["EditorialesId"] = new SelectList(_context.Editoriales, "Id", "Nombre", libros.EditorialesId);
-            return View(libros);
+
+            ViewData["EditorialesId"] = new SelectList(await _editorialesClient.Get(), "Id", "Nombre", libro.EditorialesId);
+            return View(libro);
         }
 
         // POST: Libros/Edit/5
@@ -90,9 +93,9 @@ namespace WebApp.Controllers
         // more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Isbn,EditorialesId,Titulo,Sinopsis,NPaginas")] Libros libros)
+        public async Task<IActionResult> Edit(int id, [Bind("Isbn,EditorialesId,Titulo,Sinopsis,NPaginas")] Libros libro)
         {
-            if (id != libros.Isbn)
+            if (id != libro.Isbn)
             {
                 return NotFound();
             }
@@ -101,12 +104,11 @@ namespace WebApp.Controllers
             {
                 try
                 {
-                    _context.Update(libros);
-                    await _context.SaveChangesAsync();
+                    await _client.Update(libro);
                 }
-                catch (DbUpdateConcurrencyException)
+                catch
                 {
-                    if (!LibrosExists(libros.Isbn))
+                    if (!LibrosExists(libro.Isbn))
                     {
                         return NotFound();
                     }
@@ -117,8 +119,9 @@ namespace WebApp.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["EditorialesId"] = new SelectList(_context.Editoriales, "Id", "Nombre", libros.EditorialesId);
-            return View(libros);
+
+            ViewData["EditorialesId"] = new SelectList(await _editorialesClient.Get(), "Id", "Nombre", libro.EditorialesId);
+            return View(libro);
         }
 
         // GET: Libros/Delete/5
@@ -129,15 +132,14 @@ namespace WebApp.Controllers
                 return NotFound();
             }
 
-            var libros = await _context.Libros
-                .Include(l => l.Editoriales)
-                .FirstOrDefaultAsync(m => m.Isbn == id);
-            if (libros == null)
+            var libro = await _client.GetById(id.Value);
+
+            if (libro == null)
             {
                 return NotFound();
             }
 
-            return View(libros);
+            return View(libro);
         }
 
         // POST: Libros/Delete/5
@@ -145,15 +147,14 @@ namespace WebApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var libros = await _context.Libros.FindAsync(id);
-            _context.Libros.Remove(libros);
-            await _context.SaveChangesAsync();
+            await _client.Delete(id);
+
             return RedirectToAction(nameof(Index));
         }
 
         private bool LibrosExists(int id)
         {
-            return _context.Libros.Any(e => e.Isbn == id);
+            return _client.GetById(id).Result != null;
         }
     }
 }

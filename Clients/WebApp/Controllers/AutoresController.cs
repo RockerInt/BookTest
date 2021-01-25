@@ -6,22 +6,23 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Books.Models;
+using WebApp.Clients;
 
 namespace WebApp.Controllers
 {
     public class AutoresController : Controller
     {
-        private readonly BooksContext _context;
+        private readonly AutoresClient _client;
 
-        public AutoresController(BooksContext context)
+        public AutoresController(AutoresClient client)
         {
-            _context = context;
+            this._client = client;
         }
 
         // GET: Autores
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Autores.ToListAsync());
+            return View(await _client.Get());
         }
 
         // GET: Autores/Details/5
@@ -32,8 +33,8 @@ namespace WebApp.Controllers
                 return NotFound();
             }
 
-            var autores = await _context.Autores
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var autores = await _client.GetById(id.Value);
+
             if (autores == null)
             {
                 return NotFound();
@@ -57,10 +58,10 @@ namespace WebApp.Controllers
         {
             if (ModelState.IsValid)
             {
-                _context.Add(autores);
-                await _context.SaveChangesAsync();
+                await _client.Create(autores);
                 return RedirectToAction(nameof(Index));
             }
+
             return View(autores);
         }
 
@@ -72,11 +73,13 @@ namespace WebApp.Controllers
                 return NotFound();
             }
 
-            var autores = await _context.Autores.FindAsync(id);
+            var autores = await _client.GetById(id.Value);
+
             if (autores == null)
             {
                 return NotFound();
             }
+
             return View(autores);
         }
 
@@ -96,10 +99,9 @@ namespace WebApp.Controllers
             {
                 try
                 {
-                    _context.Update(autores);
-                    await _context.SaveChangesAsync();
+                    await _client.Update(autores);
                 }
-                catch (DbUpdateConcurrencyException)
+                catch 
                 {
                     if (!AutoresExists(autores.Id))
                     {
@@ -112,6 +114,7 @@ namespace WebApp.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
+
             return View(autores);
         }
 
@@ -123,8 +126,8 @@ namespace WebApp.Controllers
                 return NotFound();
             }
 
-            var autores = await _context.Autores
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var autores = await _client.GetById(id.Value);
+
             if (autores == null)
             {
                 return NotFound();
@@ -138,15 +141,14 @@ namespace WebApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var autores = await _context.Autores.FindAsync(id);
-            _context.Autores.Remove(autores);
-            await _context.SaveChangesAsync();
+            await _client.Delete(id);
+
             return RedirectToAction(nameof(Index));
         }
 
         private bool AutoresExists(int id)
         {
-            return _context.Autores.Any(e => e.Id == id);
+            return _client.GetById(id).Result != null;
         }
     }
 }

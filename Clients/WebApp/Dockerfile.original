@@ -5,14 +5,12 @@ WORKDIR /app
 EXPOSE 80
 EXPOSE 443
 
-FROM mcr.microsoft.com/dotnet/sdk:5.0-buster-slim AS build
+FROM mcr.microsoft.com/dotnet/aspnet:5.0-buster-slim AS base
 WORKDIR /src
-COPY ["Clients/WebApp/WebApp.csproj", "Clients/WebApp/"]
-COPY ["Libraries/Utilities/Utilities.csproj", "Libraries/Utilities/"]
-COPY ["Libraries/Models/Models.csproj", "Libraries/Models/"]
-RUN dotnet restore "Clients/WebApp/WebApp.csproj"
+COPY ["BookTest/Clients/WebApp/WebApp.csproj", "BookTest/Clients/WebApp/"]
+RUN dotnet restore "BookTest/Clients/WebApp/WebApp.csproj"
 COPY . .
-WORKDIR "/src/Clients/WebApp"
+WORKDIR "/src/BookTest/Clients/WebApp"
 RUN dotnet build "WebApp.csproj" -c Release -o /app/build
 
 FROM build AS publish

@@ -5,6 +5,7 @@
     <UserSecretsId>a9509ccf-8795-4628-9d9d-8fc0edb3f54b</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerfileContext>..\..</DockerfileContext>
+    <DockerComposeProjectPath>..\..\docker-compose.dcproj</DockerComposeProjectPath>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Libraries\Models\Models.csproj" />
+    <ProjectReference Include="..\..\Libraries\Utilities\Utilities.csproj" />
   </ItemGroup>
 
 </Project>

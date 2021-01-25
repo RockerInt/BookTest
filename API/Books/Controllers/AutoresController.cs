@@ -11,7 +11,9 @@ using System.Net;
 
 namespace Books.Controllers
 {
-    public class AutoresController : Controller
+    [Route("api/v1/[controller]")]
+    [ApiController]
+    public class AutoresController : ControllerBase
     {
         private readonly BooksContext _context;
 
@@ -53,6 +55,30 @@ namespace Books.Controllers
             return Ok(autor);
         }
 
+        [HttpGet]
+        [Route("GetByEditorial/{id:int}")]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(IEnumerable<Libros>), (int)HttpStatusCode.OK)]
+        public async Task<IActionResult> GetByEditorialAsync(int id)
+        {
+            if (id <= 0)
+            {
+                return BadRequest();
+            }
+
+            var autores = await Task.FromResult(_context.Autores
+                .Include(l => l.AutoresHasLibros).ThenInclude(a => a.Libros).ThenInclude(l => l.Editoriales)
+                .Where(x => x.AutoresHasLibros.Any(y => y.Libros.Editoriales.Id == id)).ToList());
+
+            if (autores == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(autores);
+        }
+
         [HttpPost]
         [Route("Create")]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
@@ -70,7 +96,7 @@ namespace Books.Controllers
                 _context.Add(_autor);
                 await _context.SaveChangesAsync();
 
-                return CreatedAtAction(nameof(GetByIdAsync), new { id = _autor.Id }, null);
+                return StatusCode((int)HttpStatusCode.Created, _autor);
             }
             else
             {
@@ -96,10 +122,13 @@ namespace Books.Controllers
                         return NotFound();
                     }
 
+                    _autor.Nombre = autor.Nombre;
+                    _autor.Apellidos = autor.Apellidos;
+
                     _context.Update(_autor);
                     await _context.SaveChangesAsync();
 
-                    return CreatedAtAction(nameof(GetByIdAsync), new { id = _autor.Id }, null);
+                    return Ok(_autor);
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -132,6 +161,12 @@ namespace Books.Controllers
             }
 
             var autor = await _context.Autores.FindAsync(id);
+
+            if (autor is null)
+            {
+                return NotFound();
+            }
+
             _context.Autores.Remove(autor);
             await _context.SaveChangesAsync();
 

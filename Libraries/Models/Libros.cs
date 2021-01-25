@@ -19,8 +19,11 @@ namespace Books.Models
 
         [Display(Name = "Editorial")]
         public int? EditorialesId { get; set; }
+        [Required]
         public string Titulo { get; set; }
+        [Required]
         public string Sinopsis { get; set; }
+        [Required]
         public string NPaginas { get; set; }
 
 

@@ -6,22 +6,23 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Books.Models;
+using WebApp.Clients;
 
 namespace WebApp.Controllers
 {
     public class EditorialesController : Controller
     {
-        private readonly BooksContext _context;
+        private readonly EditorialesClient _client;
 
-        public EditorialesController(BooksContext context)
+        public EditorialesController(EditorialesClient client)
         {
-            _context = context;
+            _client = client;
         }
 
         // GET: Editoriales
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Editoriales.ToListAsync());
+            return View(await _client.Get());
         }
 
         // GET: Editoriales/Details/5
@@ -32,14 +33,14 @@ namespace WebApp.Controllers
                 return NotFound();
             }
 
-            var editoriales = await _context.Editoriales
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (editoriales == null)
+            var editorial = await _client.GetById(id.Value);
+
+            if (editorial == null)
             {
                 return NotFound();
             }
 
-            return View(editoriales);
+            return View(editorial);
         }
 
         // GET: Editoriales/Create
@@ -53,15 +54,15 @@ namespace WebApp.Controllers
         // more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Nombre,Sede")] Editoriales editoriales)
+        public async Task<IActionResult> Create([Bind("Id,Nombre,Sede")] Editoriales editorial)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(editoriales);
-                await _context.SaveChangesAsync();
+                await _client.Create(editorial);
                 return RedirectToAction(nameof(Index));
             }
-            return View(editoriales);
+
+            return View(editorial);
         }
 
         // GET: Editoriales/Edit/5
@@ -72,12 +73,14 @@ namespace WebApp.Controllers
                 return NotFound();
             }
 
-            var editoriales = await _context.Editoriales.FindAsync(id);
-            if (editoriales == null)
+            var editorial = await _client.GetById(id.Value);
+
+            if (editorial == null)
             {
                 return NotFound();
             }
-            return View(editoriales);
+
+            return View(editorial);
         }
 
         // POST: Editoriales/Edit/5
@@ -85,9 +88,9 @@ namespace WebApp.Controllers
         // more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Nombre,Sede")] Editoriales editoriales)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Nombre,Sede")] Editoriales editorial)
         {
-            if (id != editoriales.Id)
+            if (id != editorial.Id)
             {
                 return NotFound();
             }
@@ -96,12 +99,11 @@ namespace WebApp.Controllers
             {
                 try
                 {
-                    _context.Update(editoriales);
-                    await _context.SaveChangesAsync();
+                    await _client.Update(editorial);
                 }
-                catch (DbUpdateConcurrencyException)
+                catch
                 {
-                    if (!EditorialesExists(editoriales.Id))
+                    if (!EditorialesExists(editorial.Id))
                     {
                         return NotFound();
                     }
@@ -112,7 +114,8 @@ namespace WebApp.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(editoriales);
+
+            return View(editorial);
         }
 
         // GET: Editoriales/Delete/5
@@ -123,14 +126,14 @@ namespace WebApp.Controllers
                 return NotFound();
             }
 
-            var editoriales = await _context.Editoriales
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (editoriales == null)
+            var editorial = await _client.GetById(id.Value);
+
+            if (editorial == null)
             {
                 return NotFound();
             }
 
-            return View(editoriales);
+            return View(editorial);
         }
 
         // POST: Editoriales/Delete/5
@@ -138,15 +141,14 @@ namespace WebApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var editoriales = await _context.Editoriales.FindAsync(id);
-            _context.Editoriales.Remove(editoriales);
-            await _context.SaveChangesAsync();
+            await _client.Delete(id);
+
             return RedirectToAction(nameof(Index));
         }
 
         private bool EditorialesExists(int id)
         {
-            return _context.Editoriales.Any(e => e.Id == id);
+            return _client.GetById(id).Result != null;
         }
     }
 }
