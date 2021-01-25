@@ -2,14 +2,14 @@ USE [master]
 GO
 
 /****** Object:  Database [Books]    Script Date: 2021-01-25 2:40:00 AM ******/
-CREATE DATABASE [Books2]
+CREATE DATABASE [Books]
  CONTAINMENT = NONE
 GO
 
 ALTER DATABASE [Books] SET  READ_WRITE 
 GO
 
-USE [Books2]
+USE [Books]
 GO
 
 CREATE TABLE [dbo].[Editoriales] (

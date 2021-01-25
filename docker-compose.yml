@@ -7,7 +7,7 @@ services:
       context: .
       dockerfile: Clients/WebApp/Dockerfile
     depends_on: 
-      - db
+      - sqlserver
       - books
     networks:
       - booksnet
@@ -20,11 +20,11 @@ services:
       context: .
       dockerfile: API/Books/Dockerfile
     depends_on: 
-      - db
+      - sqlserver
     networks:
       - booksnet
     links:
-      - db
+      - sqlserver
 
   gateway:
     image: ${DOCKER_REGISTRY-}gateway
@@ -32,15 +32,15 @@ services:
       context: .
       dockerfile: API/Gateway/Dockerfile
     depends_on: 
-      - db
+      - sqlserver
       - books
     networks:
       - booksnet
     links:
       - books
 
-  db:
-    image: ${DOCKER_REGISTRY-}db
+  sqlserver:
+    image: ${DOCKER_REGISTRY-}sqlserver
     build:
       context: .
       dockerfile: BD/Dockerfile
