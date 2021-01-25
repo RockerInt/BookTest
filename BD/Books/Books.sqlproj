@@ -58,11 +58,15 @@
     <Folder Include="Properties" />
     <Folder Include="dbo\" />
     <Folder Include="dbo\Tables\" />
+    <Folder Include="Dacpacs" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="dbo\Tables\Libros.sql" />
     <Build Include="dbo\Tables\Editoriales.sql" />
     <Build Include="dbo\Tables\Autores_has_Libros.sql" />
     <Build Include="dbo\Tables\Autores.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Dacpacs\Books.dacpac" />
   </ItemGroup>
 </Project>
